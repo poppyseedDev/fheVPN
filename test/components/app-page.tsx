@@ -14,25 +14,27 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // ABI for MintableERC contract
 const mintableERCABI = [
-  "function mint(address to, uint256 amount) public",
-  "function balanceOf(address account) public view returns (uint256)",
-  "function decimals() public view returns (uint8)"
+  "function mint(address to, uint256 amount) external",
+  "function approve(address spender, uint256 amount) external returns (bool)",
+  "function balanceOf(address owner) view returns (uint256)",
+  "function transfer(address to, uint256 value) external returns (bool)",
+  "function transferFrom(address from, address to, uint256 value) external returns (bool)", // Added transferFrom
 ];
 
 // ABI for ProxyLocation contract (simplified for this example)
 const proxyLocationABI = [
-  "function addServer(uint8 _firstOctet, uint8 _secondOctet, uint8 _thirdOctet, uint8 _fourthOctet, uint128 _costToLoan, address _receivingAddress, string memory _countryServerIsIn) public",
-  "function payServerForAccess(uint8 _firstOctet, uint8 _secondOctet, uint8 _thirdOctet, uint8 _fourthOctet, uint256 _serverRequested) public",
+  "function addServer(inEuint8 memory _firstOctet, inEuint8 memory _secondOctet, inEuint8 memory _thirdOctet, inEuint8 memory _fourthOctet, uint128 _costToLoan, string memory _countryServerIsIn) public onlyAdmin",
+  "function payServerForAccess(inEuint8 memory _firstOctet, inEuint8 memory _secondOctet, inEuint8 memory _thirdOctet, inEuint8 memory _fourthOctet, uint256 _serverRequested) public",
   "function _currServerCount() public view returns (uint256)",
   "function _serverCountryList(uint256) public view returns (string)"
 ];
 
 const rpcUrl = 'https://api.helium.fhenix.zone';
-const mintableERCAddress = '0x1234567890123456789012345678901234567890';
-const proxyLocationAddress = '0x0987654321098765432109876543210987654321';
+const mintableERCAddress = '0xe58080AA9f3D37BEefc41adcF15D527F2dc94dc3';
+const proxyLocationAddress = '0x289cE92A4350D84e9106ba426A2A12C28d75Abe1';
 
 export function Page() {
-  const { account, connectWallet, error: connectError } = useConnectWallet(rpcUrl);
+  const { account, network, connectWallet, error: connectError } = useConnectWallet(rpcUrl);
   const { balance, updateBalance, error: balanceError } = useBalance(rpcUrl, mintableERCAddress, mintableERCABI);
   const { serverCount, servers, fetchServers, error: serverError } = useServers(rpcUrl, proxyLocationAddress, proxyLocationABI);
   const { mintTokens, error: mintError } = useMintTokens(rpcUrl, mintableERCAddress, mintableERCABI);
@@ -81,6 +83,7 @@ export function Page() {
         <CardContent>
           <p><strong>Address:</strong> {account || "Not connected"}</p>
           <p><strong>Balance:</strong> {balance || "0"} TFHE</p>
+          <p><strong>Connected to:</strong> {network || "-"}</p>
           {!account && (
             <Button onClick={connectWallet} className="mt-2">Connect Wallet</Button>
           )}

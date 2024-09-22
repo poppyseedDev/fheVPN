@@ -23,13 +23,12 @@ export const useMintTokens = (rpcUrl: string, mintableERCAddress: string, mintab
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner(account); 
       const contract = new ethers.Contract(mintableERCAddress, mintableERCABI, signer);
-      const decimals = await contract.decimals();
-      const amount = ethers.parseUnits(mintAmount, decimals);
+      const amount = ethers.parseUnits(mintAmount, 12);
       const tx = await contract.mint(account, amount);
       await tx.wait();
       setError('');
     } catch (err) {
-      setError('Failed to mint tokens');
+      setError(`Failed to mint tokens: ${err.message}`);
     }
   };
 
