@@ -4,6 +4,23 @@ import { useState } from 'react';
 import { ethers } from 'ethers';
 import { EncryptionTypes, FhenixClient } from 'fhenixjs';
 
+// Wrapper around ethers' BrowserProvider
+class EthersProviderWrapper {
+  private provider: ethers.BrowserProvider;
+
+  constructor(provider: ethers.BrowserProvider) {
+    this.provider = provider;
+  }
+
+  // Adapter for the send method to match FhenixClient's expected type
+  async send(method: string, params?: unknown[]): Promise<unknown> {
+    // Ensure params is always an array, fallback to empty array if undefined
+    const adaptedParams = params ?? [];
+    return this.provider.send(method, adaptedParams as any[]);
+  }
+}
+
+
 export const useServers = (rpcUrl: string, proxyLocationAddress: string, proxyLocationABI: any) => {
   const [serverCount, setServerCount] = useState<number>(0);
   const [servers, setServers] = useState<{ id: number; country: string }[]>([]);
@@ -38,11 +55,8 @@ export const useServerOperations = (rpcUrl: string, proxyLocationAddress: string
 
   const addServer = async (account: string, costToLoan: string, country: string) => {
     try {
-      const provider = new ethers.JsonRpcProvider(rpcUrl, {
-        chainId: 8008135,
-        name: 'Fhenix Helium',
-      });
-      const signer = provider.getSigner(account);
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner(account); 
       const contract = new ethers.Contract(proxyLocationAddress, proxyLocationABI, signer);
       const tx = await contract.addServer(192, 168, 1, 1, ethers.parseEther(costToLoan), account, country);
       await tx.wait();
@@ -69,11 +83,10 @@ export const usePayForServerAccess = (
     clientIP: { firstOctet: number; secondOctet: number; thirdOctet: number; fourthOctet: number },
   ) => {
     try {
-      const provider = new ethers.JsonRpcProvider(rpcUrl, {
-        chainId: 8008135,
-        name: 'Fhenix Helium',
-      });
-      const client = new FhenixClient({ provider });
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const wrappedProvider = new EthersProviderWrapper(provider);
+
+      const client = new FhenixClient({ provider: wrappedProvider });
       const signer = await provider.getSigner(account);
       const contract = new ethers.Contract(proxyLocationAddress, proxyLocationABI, signer);
 

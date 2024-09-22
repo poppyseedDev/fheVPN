@@ -6,11 +6,14 @@ export const useBalance = (rpcUrl: string, mintableERCAddress: string, mintableE
   const [error, setError] = useState<string>('');
 
   const updateBalance = async (account: string) => {
+
+    if (!window.ethereum) {
+      setError('MetaMask is not installed');
+      return;
+    }
+    
     try {
-      const provider = new ethers.JsonRpcProvider(rpcUrl, {
-        chainId: 8008135,
-        name: 'Fhenix Helium',
-      });
+      const provider = new ethers.BrowserProvider(window.ethereum);
       const contract = new ethers.Contract(mintableERCAddress, mintableERCABI, provider);
       const balanceRaw = await contract.balanceOf(account);
       const decimals = await contract.decimals();

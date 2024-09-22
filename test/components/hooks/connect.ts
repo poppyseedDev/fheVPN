@@ -6,11 +6,13 @@ export const useConnectWallet = (rpcUrl: string) => {
   const [error, setError] = useState<string>('');
 
   const connectWallet = async () => {
+    if (!window.ethereum) {
+      setError('MetaMask is not installed');
+      return;
+    }
+    
     try {
-      const provider = new ethers.JsonRpcProvider(rpcUrl, {
-        chainId: 8008135,
-        name: 'Fhenix Helium',
-      });
+      const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = provider.getSigner(account);
       const accountAddress = await (await signer).getAddress();
       setAccount(accountAddress);
